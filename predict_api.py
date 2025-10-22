@@ -4,6 +4,7 @@ import numpy as np
 import requests
 import json
 
+
 app = Flask(__name__)
 
 # Load model dan vectorizer
@@ -18,12 +19,30 @@ GEMINI_URL = (
 )
 
 
-def extract_keywords(text, top_n=10):
+def extract_keywords(text):
+    """Ekstrak semua kata penting dari teks berdasarkan bobot TF-IDF (tanpa duplikasi)."""
     tfidf_matrix = vectorizer.transform([text])
     feature_array = np.array(vectorizer.get_feature_names_out())
-    tfidf_sorting = np.argsort(tfidf_matrix.toarray()).flatten()[::-1]
-    top_n_keywords = feature_array[tfidf_sorting][:top_n]
-    return " ".join(top_n_keywords)
+    tfidf_scores = tfidf_matrix.toarray().flatten()
+
+    # Ambil kata yang punya bobot > 0
+    nonzero_indices = np.where(tfidf_scores > 0)[0]
+    keywords_with_scores = [
+        (feature_array[i], tfidf_scores[i]) for i in nonzero_indices
+    ]
+
+    # Urutkan berdasarkan skor TF-IDF terbesar
+    keywords_sorted = sorted(keywords_with_scores, key=lambda x: x[1], reverse=True)
+
+    # Hapus duplikasi, pertahankan urutan dari skor tertinggi
+    seen = set()
+    unique_keywords = []
+    for word, _ in keywords_sorted:
+        if word not in seen:
+            seen.add(word)
+            unique_keywords.append(word)
+
+    return unique_keywords
 
 
 @app.route("/parse", methods=["POST"])
@@ -95,7 +114,7 @@ Jawab dalam format JSON:
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    """Prediksi diagnosa otomatis."""
+    """Prediksi diagnosa otomatis dengan format JSON yang terstruktur."""
     data = request.get_json()
     subject = data.get("subject", "")
     assessment = data.get("assessment", "")
@@ -103,23 +122,39 @@ def predict():
     plan = data.get("plan", "")
 
     combined_text = f"{subject} {assessment} {object_} {plan}"
-    keywords_text = extract_keywords(combined_text, top_n=15)
 
-    X = vectorizer.transform([keywords_text])
+    # === Ekstrak kata penting (explainability)
+    top_tokens = extract_keywords(combined_text)
+
+    # === Prediksi dengan model
+    X = vectorizer.transform([" ".join(top_tokens)])
     probs = model.predict_proba(X)[0]
     classes = model.classes_
 
+    # === Ambil top 3 diagnosis tertinggi
     top_indices = np.argsort(probs)[::-1][:3]
-    top_diagnoses = [
-        {"diagnosa": classes[i], "confidence": float(probs[i])} for i in top_indices
-    ]
 
+    # === Load ICD mapping
+    with open("data/icd10_mapping.json", "r", encoding="utf-8") as f:
+        icd_map = json.load(f)
+
+    # === Susun hasil prediksi
+    predictions = []
+    for i in top_indices:
+        name = classes[i]
+        predictions.append(
+            {
+                "icd10": icd_map.get(name, "N/A"),
+                "name": name,
+                "score": round(float(probs[i]), 2),
+            }
+        )
+
+    # === Return sesuai format yang diinginkan
     return jsonify(
         {
-            "keywords": keywords_text.split(),
-            "diagnosa_utama": top_diagnoses[0],
-            "diagnosa_sekunder_1": top_diagnoses[1],
-            "diagnosa_sekunder_2": top_diagnoses[2],
+            "predictions": predictions,
+            "explainability": {"top_tokens": top_tokens},  # sudah unik dan relevan
         }
     )
 
