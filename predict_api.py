@@ -66,7 +66,7 @@ def parse_text():
     prompt = f"""
 Dari teks berikut yang berisi percakapan dokter dan pasien serta info pasien,
 ekstrak empat bagian:
-- Subject (keluhan utama pasien, keluhan tambahan atau riwayat penyakit)
+- Subject (keluhan keluhan utama dan tambahan pasien)
 - Assessment (penilaian dokter)
 - Object (hasil pemeriksaan)
 - Plan (rencana tindakan)
