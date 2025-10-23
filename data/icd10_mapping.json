@@ -1,5 +1,7 @@
 {
-  "Gastritis": "K29.7",
+  "Gastritis": "K29.9",
   "Tonsilitis": "J03.9",
-  "Hipertensi": "I10"
+  "Hipertensi": "I10",
+  "Diabetes Mellitus Tipe 2": "E11.9",
+  "Pneumonia": "J18.9"
 }
