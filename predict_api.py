@@ -47,7 +47,7 @@ def extract_keywords(text):
 
 @app.route("/parse", methods=["POST"])
 def parse_text():
-    """Ekstrak Subject, Assessment, Object, Plan dari percakapan dan info pasien."""
+    """Ekstrak Subject, Assessment, Object, Plan, Instruksi dari percakapan dan info pasien."""
     data = request.get_json()
     conversation = data.get("conversation", "")
     info_pasien = data.get("info", "")
@@ -65,21 +65,24 @@ def parse_text():
 
     prompt = f"""
 Dari teks berikut yang berisi percakapan dokter dan pasien serta info pasien,
-ekstrak empat bagian:
-- Subject (keluhan keluhan utama dan tambahan pasien)
+ekstrak lima bagian SOPAI:
+
+- Subject (keluhan utama & tambahan pasien)
 - Assessment (penilaian dokter)
 - Object (hasil pemeriksaan)
 - Plan (rencana tindakan)
+- Instruksi (instruksi tambahan dokter)
 
 Teks:
 {full_text}
 
 Jawab dalam format JSON:
 {{
-    "subject": "...",
-    "assessment": "...",
-    "object": "...",
-    "plan": "..."
+    "subject": "",
+    "assessment": "",
+    "object": "",
+    "plan": "",
+    "instruksi": ""
 }}
     """
 
@@ -90,6 +93,7 @@ Jawab dalam format JSON:
             json={"contents": [{"parts": [{"text": prompt}]}]},
             timeout=40,
         )
+
         result = response.json()
         raw_output = result["candidates"][0]["content"]["parts"][0]["text"]
         clean_text = raw_output.strip().replace("```json", "").replace("```", "")
@@ -102,6 +106,7 @@ Jawab dalam format JSON:
                 "assessment": "",
                 "object": "",
                 "plan": "",
+                "instruksi": "",
                 "raw_output": raw_output,
                 "error": "Gagal parsing JSON dari Gemini",
             }
