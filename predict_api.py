@@ -47,7 +47,7 @@ def extract_keywords(text):
 
 @app.route("/parse", methods=["POST"])
 def parse_text():
-    """Ekstrak Subject, Assessment, Object, Plan, Instruksi dari percakapan dan info pasien."""
+    """Ekstrak Subject, Assessment, Object, Plan, instruction dari percakapan dan info pasien."""
     data = request.get_json()
     conversation = data.get("conversation", "")
     info_pasien = data.get("info", "")
@@ -71,7 +71,7 @@ ekstrak lima bagian SOPAI:
 - Assessment (penilaian dokter)
 - Object (hasil pemeriksaan)
 - Plan (rencana tindakan)
-- Instruksi (instruksi tambahan dokter)
+- instruction (instruksi tambahan dokter)
 
 Teks:
 {full_text}
@@ -82,7 +82,7 @@ Jawab dalam format JSON:
     "assessment": "",
     "object": "",
     "plan": "",
-    "instruksi": ""
+    "instruction": ""
 }}
     """
 
@@ -106,7 +106,7 @@ Jawab dalam format JSON:
                 "assessment": "",
                 "object": "",
                 "plan": "",
-                "instruksi": "",
+                "instruction": "",
                 "raw_output": raw_output,
                 "error": "Gagal parsing JSON dari Gemini",
             }
