@@ -12,7 +12,7 @@ model = joblib.load("models/diagnosa_model.pkl")
 vectorizer = joblib.load("models/vectorizer.pkl")
 
 # Konfigurasi Gemini API
-API_KEY = "AIzaSyB6BSsIcprpCsUmWpd6yheBT-U_93f8si8"
+API_KEY = "AIzaSyCo7FsOBJLOFg-6e5V5FyCNXKzOYfVAnKs"
 GEMINI_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/"
     f"gemini-2.0-flash:generateContent?key={API_KEY}"
